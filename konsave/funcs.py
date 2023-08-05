@@ -286,7 +286,7 @@ def export(profile_name, profile_list, profile_count, archive_dir, archive_name,
         while True:
             paths = [f"{export_path}", f"{export_path}.knsv", f"{export_path}.zip"]
             if any([os.path.exists(path) for path in paths]):
-                time = "f{:%d-%m-%Y:%H-%M-%S}".format(datetime.now())
+                time = f"{datetime.now():%d-%m-%Y:%H-%M-%S}"
                 export_path = f"{export_path}_{time}"
             else:
                 break
