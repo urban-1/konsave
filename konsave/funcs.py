@@ -83,10 +83,11 @@ def mkdir(path):
 @exception_handler
 def copy(source, dest):
     """
-    This function was created because shutil.copytree gives error if the destination folder
-    exists and the argument "dirs_exist_ok" was introduced only after python 3.8.
+    This function was created because shutil.copytree gives error if the 
+    destination folder exists and the argument "dirs_exist_ok" was introduced 
+    only after python 3.8.
+    
     This restricts people with python 3.7 or less from using Konsave.
-    This function will let people with python 3.7 or less use Konsave without any issues.
     It uses recursion to copy files and folders from "source" to "dest"
 
     Args:
@@ -106,11 +107,12 @@ def copy(source, dest):
 
         if os.path.isdir(source_path):
             copy(source_path, dest_path)
-        else:
-            if os.path.exists(dest_path):
-                os.remove(dest_path)
-            if os.path.exists(source_path):
-                shutil.copy(source_path, dest)
+            continue
+        
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+        if os.path.exists(source_path):
+            shutil.copy(source_path, dest)
 
 
 @exception_handler
