@@ -15,14 +15,7 @@ from konsave.consts import (
     EXPORT_EXTENSION,
     KONSAVE_DIR,
 )
-from konsave.parse import TOKEN_SYMBOL, tokens, parse_functions, parse_keywords
-
-try:
-    import yaml
-except ModuleNotFoundError as error:
-    raise ModuleNotFoundError(
-        "Please install the module PyYAML using pip: \n pip install PyYAML"
-    ) from error
+from konsave.config import parse
 
 
 log = logging.getLogger("Konsave")
@@ -83,10 +76,10 @@ def mkdir(path):
 @exception_handler
 def copy(source, dest):
     """
-    This function was created because shutil.copytree gives error if the 
-    destination folder exists and the argument "dirs_exist_ok" was introduced 
+    This function was created because shutil.copytree gives error if the
+    destination folder exists and the argument "dirs_exist_ok" was introduced
     only after python 3.8.
-    
+
     This restricts people with python 3.7 or less from using Konsave.
     It uses recursion to copy files and folders from "source" to "dest"
 
@@ -108,7 +101,7 @@ def copy(source, dest):
         if os.path.isdir(source_path):
             copy(source_path, dest_path)
             continue
-        
+
         if os.path.exists(dest_path):
             os.remove(dest_path)
         if os.path.exists(source_path):
@@ -117,29 +110,14 @@ def copy(source, dest):
 
 @exception_handler
 def read_konsave_config(config_file) -> dict:
-    """Reads "conf.yaml" and parses it.
+    """Reads "conf.yaml" and parses it. This is a thin wrapper
+    around config.parse, mainly to handle exceptions
+    (FIXME: circular dep config<>funcs due to deco)
 
     Args:
         config_file: path to the config file
     """
-    with open(config_file, "r", encoding="utf-8") as text:
-        konsave_config = yaml.load(text.read(), Loader=yaml.SafeLoader)
-    parse_keywords(tokens, TOKEN_SYMBOL, konsave_config)
-    parse_functions(tokens, TOKEN_SYMBOL, konsave_config)
-
-    # in some cases conf.yaml may contain nothing in "entries". Yaml parses
-    # these as NoneType which are not iterable which throws an exception
-    # we can convert all None-Entries into empty lists recursively so they
-    # are simply skipped in loops later on
-    def convert_none_to_empty_list(data):
-        if isinstance(data, list):
-            data[:] = [convert_none_to_empty_list(i) for i in data]
-        elif isinstance(data, dict):
-            for k, v in data.items():
-                data[k] = convert_none_to_empty_list(v)
-        return [] if data is None else data
-
-    return convert_none_to_empty_list(konsave_config)
+    return parse(config_file)
 
 
 @exception_handler
@@ -190,7 +168,7 @@ def save_profile(args):
         location = konsave_config[section]["location"]
         folder = os.path.join(profile_dir, section)
         mkdir(folder)
-        for entry in konsave_config[section]["entries"]:
+        for entry in konsave_config[section]["entries"] or ():
             source = os.path.join(location, entry)
             dest = os.path.join(folder, entry)
             if os.path.exists(source):
@@ -317,7 +295,7 @@ def export(args):
     for name in konsave_config_export:
         location = konsave_config_export[name]["location"]
         path = mkdir(os.path.join(export_path_export, name))
-        for entry in konsave_config_export[name]["entries"]:
+        for entry in konsave_config_export[name]["entries"] or ():
             source = os.path.join(location, entry)
             dest = os.path.join(path, entry)
             log.info(f'Exporting "{entry}"...')
@@ -377,7 +355,7 @@ def import_profile(args):
         location = konsave_config["export"][section]["location"]
         path = os.path.join(temp_path, "export", section)
         mkdir(path)
-        for entry in konsave_config["export"][section]["entries"]:
+        for entry in konsave_config["export"][section]["entries"] or ():
             source = os.path.join(path, entry)
             dest = os.path.join(location, entry)  # Installs into the location ??
             log.info(f'Importing "{entry}"...')
