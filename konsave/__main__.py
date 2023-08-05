@@ -16,98 +16,57 @@ from konsave.funcs import (
 from konsave.consts import (
     VERSION,
     CONFIG_FILE,
-    list_of_profiles,
-    length_of_lop,
 )
 
 
-def _get_parser() -> argparse.ArgumentParser:
-    """Returns CLI parser.
-
-    Returns:
-        argparse.ArgumentParser: Created parser.
+def parse_args() -> argparse.ArgumentParser:
+    """
+    Parses and returns all arguments
     """
     parser = argparse.ArgumentParser(
         prog="Konsave",
         epilog="Please report bugs at https://www.github.com/prayag2/konsave",
     )
 
-    parser.add_argument(
-        "-l",
-        "--list",
-        required=False,
-        action="store_true",
-        help="Lists created profiles",
-    )
-    parser.add_argument(
-        "-s",
-        "--save",
-        required=False,
-        type=str,
-        help="Save current config as a profile",
-        metavar="<name>",
-    )
-    parser.add_argument(
-        "-r",
-        "--remove",
-        required=False,
-        type=str,
-        help="Remove the specified profile",
-        metavar="<name>",
-    )
-    parser.add_argument(
-        "-a",
-        "--apply",
-        required=False,
-        type=str,
-        help="Apply the specified profile",
-        metavar="<name>",
-    )
-    parser.add_argument(
-        "-e",
-        "--export-profile",
-        required=False,
-        type=str,
-        help="Export an existing profile and share with your friends!",
-        metavar="<name>",
-    )
-    parser.add_argument(
-        "-i",
-        "--import-profile",
-        required=False,
-        type=str,
-        help="Import a konsave file",
-        metavar="<path>",
-    )
-    parser.add_argument(
-        "-f",
-        "--force",
-        required=False,
-        action="store_true",
-        help="Overwrite already saved profiles",
-    )
-    parser.add_argument(
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("list")
+
+    save_parser = sub.add_parser("save")
+    save_parser.add_argument("-f", "--force", action="store_true")
+    save_parser.add_argument("name")
+
+    rm_parser = sub.add_parser("remove")
+    rm_parser.add_argument("name")
+
+    apply_parser = sub.add_parser("apply")
+    apply_parser.add_argument("name")
+
+    export_parser = sub.add_parser("export")
+    export_parser.add_argument("name")
+    export_parser.add_argument("-f", "--force", action="store_true")
+    export_parser.add_argument(
         "-d",
-        "--export-directory",
+        "--directory",
         required=False,
         help="Specify the export directory when exporting a profile",
         metavar="<directory>",
     )
-    parser.add_argument(
+    export_parser.add_argument(
         "-n",
         "--export-name",
         required=False,
         help="Specify the export name when exporting a profile",
         metavar="<archive-name>",
     )
-    parser.add_argument(
-        "-v", "--version", required=False, action="store_true", help="Show version"
-    )
-    parser.add_argument(
-        "-w", "--wipe", required=False, action="store_true", help="Wipes all profiles."
-    )
 
-    return parser
+    import_parser = sub.add_parser("import")
+    import_parser.add_argument("konsave-file")
+
+    sub.add_parser("wipe")
+    sub.add_parser("version")
+
+    return parser.parse_args()
 
 
 def main():
@@ -121,34 +80,18 @@ def main():
             default_config_path = resource_filename("konsave", "conf_other.yaml")
             shutil.copy(default_config_path, CONFIG_FILE)
 
-    parser = _get_parser()
-    args = parser.parse_args()
-
-    if args.list:
-        list_profiles(list_of_profiles, length_of_lop)
-    elif args.save:
-        save_profile(args.save, list_of_profiles, force=args.force)
-    elif args.remove:
-        remove_profile(args.remove, list_of_profiles, length_of_lop)
-    elif args.apply:
-        apply_profile(args.apply, list_of_profiles, length_of_lop)
-    elif args.export_profile:
-        export(
-            args.export_profile,
-            list_of_profiles,
-            length_of_lop,
-            args.export_directory,
-            args.export_name,
-            args.force,
-        )
-    elif args.import_profile:
-        import_profile(args.import_profile)
-    elif args.version:
-        print(f"Konsave: {VERSION}")
-    elif args.wipe:
-        wipe()
-    else:
-        parser.print_help()
+    args = parse_args()
+    funcs = {
+        "list": list_profiles,
+        "save": save_profile,
+        "remove": remove_profile,
+        "apply": apply_profile,
+        "export": export,
+        "import": import_profile,
+        "version": lambda args: print(f"Konsave: {VERSION}"),
+        "wipe": wipe,
+    }
+    return funcs[args.cmd](args)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,12 @@ def exception_handler(func):
     return inner_func
 
 
+def get_profiles():
+    """Return the profile names installed/saved and their count"""
+    profs = os.listdir(PROFILES_DIR)
+    return profs, len(profs)
+
+
 def mkdir(path):
     """Creates directory if it doesn't exist.
 
@@ -142,19 +148,17 @@ def read_konsave_config(config_file) -> dict:
 
 
 @exception_handler
-def list_profiles(profile_list, profile_count):
+def list_profiles(args):  # pylint: disable=unused-argument
     """Lists all the created profiles.
 
     Args:
         profile_list: the list of all created profiles
         profile_count: number of profiles created
     """
+    profile_list, profile_count = get_profiles()
 
     # assert
     assert os.path.exists(PROFILES_DIR) and profile_count != 0, "No profile found."
-
-    # sort in alphabetical order
-    profile_list.sort()
 
     # run
     print("Konsave profiles:")
@@ -164,7 +168,7 @@ def list_profiles(profile_list, profile_count):
 
 
 @exception_handler
-def save_profile(name, profile_list, force=False):
+def save_profile(args):
     """Saves necessary config files in ~/.config/konsave/profiles/<name>.
 
     Args:
@@ -172,9 +176,13 @@ def save_profile(name, profile_list, force=False):
         profile_list: the list of all created profiles
         force: force overwrite already created profile, optional
     """
+    name = args.name
+    profile_list, _ = get_profiles()
 
     # assert
-    assert name not in profile_list or force, "Profile with this name already exists"
+    assert (
+        args.name not in profile_list or args.force
+    ), "Profile with this name already exists"
 
     # run
     log("saving profile...")
@@ -202,7 +210,7 @@ def save_profile(name, profile_list, force=False):
 
 
 @exception_handler
-def apply_profile(profile_name, profile_list, profile_count):
+def apply_profile(args):
     """Applies profile of the given id.
 
     Args:
@@ -211,12 +219,13 @@ def apply_profile(profile_name, profile_list, profile_count):
         profile_count: number of profiles created
     """
 
+    profile_list, profile_count = get_profiles()
     # assert
     assert profile_count != 0, "No profile saved yet."
-    assert profile_name in profile_list, "Profile not found :("
+    assert args.name in profile_list, "Profile not found :("
 
     # run
-    profile_dir = os.path.join(PROFILES_DIR, profile_name)
+    profile_dir = os.path.join(PROFILES_DIR, args.name)
 
     log("copying files...")
 
@@ -232,7 +241,7 @@ def apply_profile(profile_name, profile_list, profile_count):
 
 
 @exception_handler
-def remove_profile(profile_name, profile_list, profile_count):
+def remove_profile(args):
     """Removes the specified profile.
 
     Args:
@@ -241,18 +250,19 @@ def remove_profile(profile_name, profile_list, profile_count):
         profile_count: number of profiles created
     """
 
+    profile_list, profile_count = get_profiles()
     # assert
     assert profile_count != 0, "No profile saved yet."
-    assert profile_name in profile_list, "Profile not found."
+    assert args.name in profile_list, "Profile not found."
 
     # run
     log("removing profile...")
-    shutil.rmtree(os.path.join(PROFILES_DIR, profile_name))
+    shutil.rmtree(os.path.join(PROFILES_DIR, args.name))
     log("removed profile successfully")
 
 
 @exception_handler
-def export(profile_name, profile_list, profile_count, archive_dir, archive_name, force):
+def export(args):
     """It will export the specified profile as a ".knsv" to the specified directory.
        If there is no specified directory, the directory is set to the current working directory.
 
@@ -265,6 +275,10 @@ def export(profile_name, profile_list, profile_count, archive_dir, archive_name,
         name: the name of the resulting archive
     """
 
+    profile_name = args.name
+    profile_list, profile_count = get_profiles()
+    archive_dir = args.directory
+    archive_name = args.name
     # assert
     assert profile_count != 0, "No profile saved yet."
     assert profile_name in profile_list, "Profile not found."
@@ -282,7 +296,7 @@ def export(profile_name, profile_list, profile_count, archive_dir, archive_name,
 
     # Only continue if export_path, export_path.ksnv and export_path.zip don't exist
     # Appends date and time to create a unique file name
-    if not force:
+    if not args.force:
         while True:
             paths = [f"{export_path}", f"{export_path}.knsv", f"{export_path}.zip"]
             if any(os.path.exists(path) for path in paths):
@@ -330,13 +344,13 @@ def export(profile_name, profile_list, profile_count, archive_dir, archive_name,
 
 
 @exception_handler
-def import_profile(path):
+def import_profile(args):
     """This will import an exported profile.
 
     Args:
         path: path of the `.knsv` file
     """
-
+    path = args.path
     # assert
     assert (
         is_zipfile(path) and path[-5:] == EXPORT_EXTENSION
@@ -359,6 +373,7 @@ def import_profile(path):
     config_file_location = os.path.join(temp_path, "conf.yaml")
     konsave_config = read_konsave_config(config_file_location)
 
+    # Copies only under "profiles"
     profile_dir = os.path.join(PROFILES_DIR, item)
     copy(os.path.join(temp_path, "save"), profile_dir)
     shutil.copy(os.path.join(temp_path, "conf.yaml"), profile_dir)
@@ -369,7 +384,7 @@ def import_profile(path):
         mkdir(path)
         for entry in konsave_config["export"][section]["entries"]:
             source = os.path.join(path, entry)
-            dest = os.path.join(location, entry)
+            dest = os.path.join(location, entry)  # Installs into the location ??
             log(f'Importing "{entry}"...')
             if os.path.exists(source):
                 if os.path.isdir(source):

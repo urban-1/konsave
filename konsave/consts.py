@@ -19,7 +19,4 @@ EXPORT_EXTENSION = ".knsv"
 if not os.path.exists(PROFILES_DIR):
     os.makedirs(PROFILES_DIR)
 
-list_of_profiles = os.listdir(PROFILES_DIR)
-length_of_lop = len(list_of_profiles)
-
 VERSION = __version__
