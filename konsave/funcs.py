@@ -3,6 +3,7 @@ This module contains all the functions for konsave.
 """
 
 import os
+import logging
 import shutil
 import traceback
 from datetime import datetime
@@ -22,6 +23,9 @@ except ModuleNotFoundError as error:
     raise ModuleNotFoundError(
         "Please install the module PyYAML using pip: \n pip install PyYAML"
     ) from error
+
+
+log = logging.getLogger("Konsave")
 
 
 def exception_handler(func):
@@ -74,17 +78,6 @@ def mkdir(path):
     if not os.path.exists(path):
         os.makedirs(path)
     return path
-
-
-def log(msg, *args, **kwargs):
-    """Logs text.
-
-    Args:
-        msg: the text to be printed
-        *args: any arguments for the function print()
-        **kwargs: any keyword arguments for the function print()
-    """
-    print(f"Konsave: {msg}", *args, **kwargs)
 
 
 @exception_handler
@@ -185,7 +178,7 @@ def save_profile(args):
     ), "Profile with this name already exists"
 
     # run
-    log("saving profile...")
+    log.info("saving profile...")
     profile_dir = os.path.join(PROFILES_DIR, name)
     mkdir(profile_dir)
 
@@ -206,7 +199,7 @@ def save_profile(args):
 
     shutil.copy(CONFIG_FILE, profile_dir)
 
-    log("Profile saved successfully!")
+    log.info("Profile saved successfully!")
 
 
 @exception_handler
@@ -227,7 +220,7 @@ def apply_profile(args):
     # run
     profile_dir = os.path.join(PROFILES_DIR, args.name)
 
-    log("copying files...")
+    log.info("copying files...")
 
     config_location = os.path.join(profile_dir, "conf.yaml")
     profile_config = read_konsave_config(config_location)["save"]
@@ -235,7 +228,7 @@ def apply_profile(args):
         location = os.path.join(profile_dir, name)
         copy(location, profile_config[name]["location"])
 
-    log(
+    log.info(
         "Profile applied successfully! Please log-out and log-in to see the changes completely!"
     )
 
@@ -256,9 +249,9 @@ def remove_profile(args):
     assert args.name in profile_list, "Profile not found."
 
     # run
-    log("removing profile...")
+    log.info("removing profile...")
     shutil.rmtree(os.path.join(PROFILES_DIR, args.name))
-    log("removed profile successfully")
+    log.info("removed profile successfully")
 
 
 @exception_handler
@@ -306,7 +299,7 @@ def export(args):
                 break
 
     # compressing the files as zip
-    log("Exporting profile. It might take a minute or two...")
+    log.info("Exporting profile. It might take a minute or two...")
 
     profile_config_file = os.path.join(profile_dir, "conf.yaml")
     konsave_config = read_konsave_config(profile_config_file)
@@ -314,7 +307,7 @@ def export(args):
     export_path_save = mkdir(os.path.join(export_path, "save"))
     for name in konsave_config["save"]:
         location = os.path.join(profile_dir, name)
-        log(f'Exporting "{name}"...')
+        log.info(f'Exporting "{name}"...')
         copy(location, os.path.join(export_path_save, name))
 
     konsave_config_export = konsave_config["export"]
@@ -325,7 +318,7 @@ def export(args):
         for entry in konsave_config_export[name]["entries"]:
             source = os.path.join(location, entry)
             dest = os.path.join(path, entry)
-            log(f'Exporting "{entry}"...')
+            log.info(f'Exporting "{entry}"...')
             if os.path.exists(source):
                 if os.path.isdir(source):
                     copy(source, dest)
@@ -334,13 +327,13 @@ def export(args):
 
     shutil.copy(CONFIG_FILE, export_path)
 
-    log("Creating archive")
+    log.info("Creating archive")
     shutil.make_archive(export_path, "zip", export_path)
 
     shutil.rmtree(export_path)
     shutil.move(export_path + ".zip", export_path + EXPORT_EXTENSION)
 
-    log(f"Successfully exported to {export_path}{EXPORT_EXTENSION}")
+    log.info(f"Successfully exported to {export_path}{EXPORT_EXTENSION}")
 
 
 @exception_handler
@@ -361,7 +354,7 @@ def import_profile(args):
     ), "A profile with this name already exists"
 
     # run
-    log("Importing profile. It might take a minute or two...")
+    log.info("Importing profile. It might take a minute or two...")
 
     item = os.path.basename(path).replace(EXPORT_EXTENSION, "")
 
@@ -385,7 +378,7 @@ def import_profile(args):
         for entry in konsave_config["export"][section]["entries"]:
             source = os.path.join(path, entry)
             dest = os.path.join(location, entry)  # Installs into the location ??
-            log(f'Importing "{entry}"...')
+            log.info(f'Importing "{entry}"...')
             if os.path.exists(source):
                 if os.path.isdir(source):
                     copy(source, dest)
@@ -394,7 +387,7 @@ def import_profile(args):
 
     shutil.rmtree(temp_path)
 
-    log("Profile successfully imported!")
+    log.info("Profile successfully imported!")
 
 
 @exception_handler
@@ -403,6 +396,6 @@ def wipe():
     confirm = input('This will wipe all your profiles. Enter "WIPE" To continue: ')
     if confirm == "WIPE":
         shutil.rmtree(PROFILES_DIR)
-        log("Removed all profiles!")
+        log.info("Removed all profiles!")
     else:
-        log("Aborting...")
+        log.info("Aborting...")

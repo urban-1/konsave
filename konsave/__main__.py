@@ -3,6 +3,7 @@
 import argparse
 import os
 import shutil
+import logging
 from pkg_resources import resource_filename
 from konsave.funcs import (
     list_profiles,
@@ -18,6 +19,8 @@ from konsave.consts import (
     CONFIG_FILE,
 )
 
+logging.basicConfig(format="%(name)s: %(message)s", level=logging.INFO)
+
 
 def parse_args() -> argparse.ArgumentParser:
     """
@@ -26,6 +29,9 @@ def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="Konsave",
         epilog="Please report bugs at https://www.github.com/prayag2/konsave",
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Enable debug logging"
     )
 
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -81,6 +87,8 @@ def main():
             shutil.copy(default_config_path, CONFIG_FILE)
 
     args = parse_args()
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
     funcs = {
         "list": list_profiles,
         "save": save_profile,
