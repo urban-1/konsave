@@ -1,11 +1,17 @@
 ---
-# This is the configuration file for konsave.
-# This file is pre-configured for KDE Plasma users.
-# This will backup all the important files for your Plasma customizations.
-# Please make sure it follows the correct format for proper working of Konsave.
+# This is the configuration file for konsave. 
+#
+# It is pre-configured for KDE Plasma users and will backup all the important 
+# files for your Plasma customizations. Please make sure it follows the correct 
+#  format for proper working of Konsave.
+#
 # The format should be:
+#
 # ---
 # save:
+#     # This inludes configs. All files listed here are being re-installed
+#     # when one calls konsave apply <profile> (overwriting existing user
+#     # configs)
 #     name:
 #         location: "path/to/parent/directory"
 #         entries: 
@@ -14,21 +20,23 @@
 #             - file1
 #             - file2
 # export:
-#     # This includes files which will be exported with your profile.
-#     # They will not be saved but only be exported and imported.
-#     # These may include files like complete icon packs and themes..
+#     # This includes files which will be exported with your profile archive.
+#     # These will not be copied over on "apply" but only on import. Ideally
+#     # this section should include files like icon packs, themes, fonts
 #     name:
 #         location: "path/to/parent/directory"
 #         entries: 
 #             - file1
 #             - file2
 # ...
+#
 # You can use these placeholders in the "location" of each item:
 # $HOME: the home directory
 # $CONFIG_DIR: refers to "$HOME/.config/"
 # $SHARE_DIR: refers to "$HOME/.local/share"
 # $BIN_DIR: refers to "$HOME/.local/bin"
 # ${ENDS_WITH="text"}: for folders with different names on different computers whose names end with the same thing.
+#
 # The best example for this is the "*.default-release" folder of firefox.
 # ${BEGINS_WITH="text"}: for folders with different names on different computers whose names start with the same thing.
 
@@ -71,6 +79,11 @@ save:
         entries:
             - dolphin
             - konsole
+    code:
+        location: "$CONFIG_DIR/Code/User"
+        entries:
+            - settings.json
+            - keybindings.json
 
     # Here are a few examples of how you can add more stuff to back up.
     # Uncomment these lines if you want.
@@ -79,10 +92,6 @@ save:
     #     entries:
     #         - chrome # for firefox customizations
 
-    # code oss:
-    #     location: "$CONFIG_DIR/Code - OSS/User/"
-    #     entries:
-    #         - settings.json
 
 
 # The following files will only be used for exporting and importing.
