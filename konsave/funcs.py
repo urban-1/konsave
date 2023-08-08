@@ -15,6 +15,7 @@ import tabulate
 from konsave.consts import (
     CONFIG_DIR,
     CONFIG_FILE,
+    KDE_RELOAD_CMD,
     PROFILES_DIR,
     EXPORT_EXTENSION,
 )
@@ -180,6 +181,10 @@ def apply_profile(args):
     log.info(
         "Profile applied successfully! Please log-out and log-in to see the changes completely!"
     )
+
+    if args.reload_kde:
+        log.info(KDE_RELOAD_CMD)
+        os.system(KDE_RELOAD_CMD)
 
 
 def remove_profile(args):

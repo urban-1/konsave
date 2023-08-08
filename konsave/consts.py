@@ -15,6 +15,8 @@ CONFIG_FILE = os.path.join(KONSAVE_DIR, "conf.yaml")
 
 EXPORT_EXTENSION = ".knsv"
 
+KDE_RELOAD_CMD = "killall plasmashell; kstart plasmashell"
+
 # Create PROFILES_DIR if it doesn't exist
 if not os.path.exists(PROFILES_DIR):
     os.makedirs(PROFILES_DIR)

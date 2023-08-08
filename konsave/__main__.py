@@ -15,6 +15,7 @@ from konsave.funcs import (
     wipe,
 )
 from konsave.consts import (
+    KDE_RELOAD_CMD,
     VERSION,
 )
 
@@ -46,6 +47,12 @@ def parse_args() -> argparse.ArgumentParser:
 
     apply_parser = sub.add_parser("apply")
     apply_parser.add_argument("name")
+    apply_parser.add_argument(
+        "-r",
+        "--reload-kde",
+        action="store_true",
+        help=f"If set, it will execute the KDE_RELOAD_CMD: '{KDE_RELOAD_CMD}'",
+    )
 
     export_parser = sub.add_parser(
         "export", help="Export a profile to a konsave archive"
