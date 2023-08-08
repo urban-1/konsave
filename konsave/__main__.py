@@ -1,12 +1,11 @@
 """Konsave entry point."""
 
 import argparse
-import os
-import shutil
 import logging
-from pkg_resources import resource_filename
 from konsave.funcs import (
+    install_config,
     list_profiles,
+    reset_config,
     save_profile,
     remove_profile,
     apply_profile,
@@ -16,7 +15,6 @@ from konsave.funcs import (
 )
 from konsave.consts import (
     VERSION,
-    CONFIG_FILE,
 )
 
 logging.basicConfig(format="%(name)s: %(message)s", level=logging.INFO)
@@ -71,24 +69,32 @@ def parse_args() -> argparse.ArgumentParser:
 
     sub.add_parser("wipe")
     sub.add_parser("version")
-
+    sub.add_parser(
+        "reset-config",
+        help=(
+            "Reset the konsave config to the factory default. This option is "
+            "mainly useful for development"
+        ),
+    )
     return parser.parse_args()
 
 
 def main():
     """The main function that handles all the arguments and options."""
 
-    if not os.path.exists(CONFIG_FILE):
-        if os.path.expandvars("$XDG_CURRENT_DESKTOP") == "KDE":
-            default_config_path = resource_filename("konsave", "conf_kde.yaml")
-            shutil.copy(default_config_path, CONFIG_FILE)
-        else:
-            default_config_path = resource_filename("konsave", "conf_other.yaml")
-            shutil.copy(default_config_path, CONFIG_FILE)
+    # Never force by default
+    install_config(force=False)
 
     args = parse_args()
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            "%(levelname).1s%(asctime)s.%(msecs)03d [%(name)s]: %(message)s",
+            datefmt="%d%m %H:%M:%S",
+        )
+        for handler in logging.getLogger().handlers:
+            handler.setFormatter(formatter)
+
     funcs = {
         "list": list_profiles,
         "save": save_profile,
@@ -98,6 +104,7 @@ def main():
         "import": import_profile,
         "version": lambda args: print(f"Konsave: {VERSION}"),
         "wipe": wipe,
+        "reset-config": reset_config,
     }
     return funcs[args.cmd](args)
 

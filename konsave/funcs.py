@@ -7,6 +7,8 @@ import logging
 import shutil
 from datetime import datetime
 from zipfile import is_zipfile, ZipFile
+from pkg_resources import resource_filename
+
 from konsave.consts import (
     CONFIG_FILE,
     PROFILES_DIR,
@@ -109,24 +111,27 @@ def save_profile(args):
     ), "Profile with this name already exists"
 
     # run
-    log.info("saving profile...")
+    log.info("Saving profile...")
     profile_dir = os.path.join(PROFILES_DIR, name)
     mkdir(profile_dir)
 
     konsave_config = parse(CONFIG_FILE)["save"]
 
-    for section in konsave_config:
-        location = konsave_config[section]["location"]
-        folder = os.path.join(profile_dir, section)
+    for section_name, section in konsave_config.items():
+        log.debug(f" - Processing {section_name}")
+        folder = os.path.join(profile_dir, section_name)
         mkdir(folder)
-        for entry in konsave_config[section]["entries"] or ():
-            source = os.path.join(location, entry)
+        for entry in section["entries"] or ():
+            source = os.path.join(section["location"], entry)
             dest = os.path.join(folder, entry)
-            if os.path.exists(source):
-                if os.path.isdir(source):
-                    copy(source, dest)
-                else:
-                    shutil.copy(source, dest)
+            if not os.path.exists(source):
+                log.debug(f"File {source} does not exist")
+                continue
+
+            if os.path.isdir(source):
+                copy(source, dest)
+            else:
+                shutil.copy(source, dest)
 
     shutil.copy(CONFIG_FILE, profile_dir)
 
@@ -325,3 +330,30 @@ def wipe():
         log.info("Removed all profiles!")
     else:
         log.info("Aborting...")
+
+
+def install_config(force: bool = False):
+    """
+    Install the main konsave config into the user's ~/.config folder.
+    If force is True, it will delete any existing config and overwrite
+    with the distributed one.
+    """
+    if os.path.exists(CONFIG_FILE) and force:
+        os.unlink(CONFIG_FILE)
+
+    if os.path.exists(CONFIG_FILE):
+        return
+
+    if os.path.expandvars("$XDG_CURRENT_DESKTOP") == "KDE":
+        default_config_path = resource_filename("konsave", "conf_kde.yaml")
+        shutil.copy(default_config_path, CONFIG_FILE)
+    else:
+        default_config_path = resource_filename("konsave", "conf_other.yaml")
+        shutil.copy(default_config_path, CONFIG_FILE)
+
+
+def reset_config(args):  # pylint: disable=unused-argument
+    """
+    Subcommand compliant entrypoint to delete and re-deploy config
+    """
+    install_config(force=True)
