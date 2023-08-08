@@ -12,6 +12,7 @@ from pkg_resources import resource_filename
 import tabulate
 
 from konsave.consts import (
+    CONFIG_DIR,
     CONFIG_FILE,
     PROFILES_DIR,
     EXPORT_EXTENSION,
@@ -324,6 +325,25 @@ def import_profile(args):
     shutil.rmtree(temp_path)
 
     log.info("Profile successfully imported!")
+
+
+def config_check(args):  # pylint: disable=unused-argument
+    """Compare konsave config with user's ~/.config"""
+
+    konsave_config = parse(CONFIG_FILE)
+
+    dir_entries = set(os.listdir(CONFIG_DIR))
+
+    for name, section in konsave_config["save"].items():
+        if not section["location"] == CONFIG_DIR:
+            continue
+
+        print(f"\n# Config section: {name}\n")
+        entries = set(section["entries"])
+        table = []
+        for entry in sorted(entries | dir_entries):
+            table.append([entry, entry in entries, entry in dir_entries])
+        print(tabulate.tabulate(table, headers=["Entry", "Backed Up?", "In ~/.config"]))
 
 
 def wipe():

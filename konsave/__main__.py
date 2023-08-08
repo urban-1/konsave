@@ -3,6 +3,7 @@
 import argparse
 import logging
 from konsave.funcs import (
+    config_check,
     install_config,
     list_profiles,
     reset_config,
@@ -46,7 +47,9 @@ def parse_args() -> argparse.ArgumentParser:
     apply_parser = sub.add_parser("apply")
     apply_parser.add_argument("name")
 
-    export_parser = sub.add_parser("export")
+    export_parser = sub.add_parser(
+        "export", help="Export a profile to a konsave archive"
+    )
     export_parser.add_argument("name")
     export_parser.add_argument("-f", "--force", action="store_true")
     export_parser.add_argument(
@@ -64,11 +67,13 @@ def parse_args() -> argparse.ArgumentParser:
         metavar="<archive-name>",
     )
 
-    import_parser = sub.add_parser("import")
+    import_parser = sub.add_parser(
+        "import", help="Import a profile from a konsave archive"
+    )
     import_parser.add_argument("konsave-file")
 
-    sub.add_parser("wipe")
-    sub.add_parser("version")
+    sub.add_parser("wipe", help="Wipe all profiles - this cannot be undone!")
+    sub.add_parser("version", help="Show Konsave version")
     sub.add_parser(
         "reset-config",
         help=(
@@ -76,6 +81,15 @@ def parse_args() -> argparse.ArgumentParser:
             "mainly useful for development"
         ),
     )
+
+    sub.add_parser(
+        "config-check",
+        help=(
+            "Check currect config against ~/.config folders/files and show what "
+            "is backed up and what is not"
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -105,6 +119,7 @@ def main():
         "version": lambda args: print(f"Konsave: {VERSION}"),
         "wipe": wipe,
         "reset-config": reset_config,
+        "config-check": config_check,
     }
     return funcs[args.cmd](args)
 
