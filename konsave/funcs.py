@@ -5,11 +5,9 @@ This module contains all the functions for konsave.
 import os
 import logging
 import shutil
-import traceback
 from datetime import datetime
 from zipfile import is_zipfile, ZipFile
 from konsave.consts import (
-    HOME,
     CONFIG_FILE,
     PROFILES_DIR,
     EXPORT_EXTENSION,
@@ -19,38 +17,6 @@ from konsave.config import parse
 
 
 log = logging.getLogger("Konsave")
-
-
-def exception_handler(func):
-    """Handles errors and prints nicely.
-
-    Args:
-        func: any function
-
-    Returns:
-        Returns function
-    """
-
-    def inner_func(*args, **kwargs):
-        try:
-            function = func(*args, **kwargs)
-        except Exception as err:
-            dateandtime = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
-            log_file = os.path.join(HOME, ".cache/konsave_log.txt")
-
-            with open(log_file, "a", encoding="utf-8") as file:
-                file.write(dateandtime + "\n")
-                traceback.print_exc(file=file)
-                file.write("\n")
-
-            print(
-                f"Konsave: {err}\nPlease check the log at {log_file} for more details."
-            )
-            return None
-
-        return function
-
-    return inner_func
 
 
 def get_profiles():
@@ -73,7 +39,6 @@ def mkdir(path):
     return path
 
 
-@exception_handler
 def copy(source, dest):
     """
     This function was created because shutil.copytree gives error if the
@@ -108,19 +73,6 @@ def copy(source, dest):
             shutil.copy(source_path, dest)
 
 
-@exception_handler
-def read_konsave_config(config_file) -> dict:
-    """Reads "conf.yaml" and parses it. This is a thin wrapper
-    around config.parse, mainly to handle exceptions
-    (FIXME: circular dep config<>funcs due to deco)
-
-    Args:
-        config_file: path to the config file
-    """
-    return parse(config_file)
-
-
-@exception_handler
 def list_profiles(args):  # pylint: disable=unused-argument
     """Lists all the created profiles.
 
@@ -140,7 +92,6 @@ def list_profiles(args):  # pylint: disable=unused-argument
         print(f"{i + 1}\t{item}")
 
 
-@exception_handler
 def save_profile(args):
     """Saves necessary config files in ~/.config/konsave/profiles/<name>.
 
@@ -162,7 +113,7 @@ def save_profile(args):
     profile_dir = os.path.join(PROFILES_DIR, name)
     mkdir(profile_dir)
 
-    konsave_config = read_konsave_config(CONFIG_FILE)["save"]
+    konsave_config = parse(CONFIG_FILE)["save"]
 
     for section in konsave_config:
         location = konsave_config[section]["location"]
@@ -182,7 +133,6 @@ def save_profile(args):
     log.info("Profile saved successfully!")
 
 
-@exception_handler
 def apply_profile(args):
     """Applies profile of the given id.
 
@@ -203,7 +153,7 @@ def apply_profile(args):
     log.info("copying files...")
 
     config_location = os.path.join(profile_dir, "conf.yaml")
-    profile_config = read_konsave_config(config_location)["save"]
+    profile_config = parse(config_location)["save"]
     for name in profile_config:
         location = os.path.join(profile_dir, name)
         copy(location, profile_config[name]["location"])
@@ -213,7 +163,6 @@ def apply_profile(args):
     )
 
 
-@exception_handler
 def remove_profile(args):
     """Removes the specified profile.
 
@@ -234,7 +183,6 @@ def remove_profile(args):
     log.info("removed profile successfully")
 
 
-@exception_handler
 def export(args):
     """It will export the specified profile as a ".knsv" to the specified directory.
        If there is no specified directory, the directory is set to the current working directory.
@@ -282,7 +230,7 @@ def export(args):
     log.info("Exporting profile. It might take a minute or two...")
 
     profile_config_file = os.path.join(profile_dir, "conf.yaml")
-    konsave_config = read_konsave_config(profile_config_file)
+    konsave_config = parse(profile_config_file)
 
     export_path_save = mkdir(os.path.join(export_path, "save"))
     for name in konsave_config["save"]:
@@ -316,7 +264,6 @@ def export(args):
     log.info(f"Successfully exported to {export_path}{EXPORT_EXTENSION}")
 
 
-@exception_handler
 def import_profile(args):
     """This will import an exported profile.
 
@@ -344,7 +291,7 @@ def import_profile(args):
         zip_file.extractall(temp_path)
 
     config_file_location = os.path.join(temp_path, "conf.yaml")
-    konsave_config = read_konsave_config(config_file_location)
+    konsave_config = parse(config_file_location)
 
     # Copies only under "profiles"
     profile_dir = os.path.join(PROFILES_DIR, item)
@@ -370,7 +317,6 @@ def import_profile(args):
     log.info("Profile successfully imported!")
 
 
-@exception_handler
 def wipe():
     """Wipes all profiles."""
     confirm = input('This will wipe all your profiles. Enter "WIPE" To continue: ')
