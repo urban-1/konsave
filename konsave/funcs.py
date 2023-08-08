@@ -9,6 +9,8 @@ from datetime import datetime
 from zipfile import is_zipfile, ZipFile
 from pkg_resources import resource_filename
 
+import tabulate
+
 from konsave.consts import (
     CONFIG_FILE,
     PROFILES_DIR,
@@ -89,9 +91,11 @@ def list_profiles(args):  # pylint: disable=unused-argument
 
     # run
     print("Konsave profiles:")
-    print("ID\tNAME")
-    for i, item in enumerate(profile_list):
-        print(f"{i + 1}\t{item}")
+    print(
+        tabulate.tabulate(
+            [[i, item] for i, item in enumerate(profile_list)], headers=["ID", "NAME"]
+        )
+    )
 
 
 def save_profile(args):
