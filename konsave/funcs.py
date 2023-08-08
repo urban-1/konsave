@@ -6,6 +6,7 @@ import os
 import logging
 import shutil
 from datetime import datetime
+from tempfile import TemporaryDirectory
 from zipfile import is_zipfile, ZipFile
 from pkg_resources import resource_filename
 
@@ -16,7 +17,6 @@ from konsave.consts import (
     CONFIG_FILE,
     PROFILES_DIR,
     EXPORT_EXTENSION,
-    KONSAVE_DIR,
 )
 from konsave.config import parse
 
@@ -78,6 +78,22 @@ def copy(source, dest):
             shutil.copy(source_path, dest)
 
 
+def copy_source_exist(source, dest):
+    """
+    Call the correct copy only if the source path exists. If this
+    is a directory then our copy() will be used, otherwise shutil
+    copy will be called
+    """
+    if not os.path.exists(source):
+        log.debug(f"File or directory '{source}' does not exist")
+        return
+
+    if os.path.isdir(source):
+        copy(source, dest)
+    else:
+        shutil.copy(source, dest)
+
+
 def list_profiles(args):  # pylint: disable=unused-argument
     """Lists all the created profiles.
 
@@ -129,14 +145,7 @@ def save_profile(args):
         for entry in section["entries"] or ():
             source = os.path.join(section["location"], entry)
             dest = os.path.join(folder, entry)
-            if not os.path.exists(source):
-                log.debug(f"File {source} does not exist")
-                continue
-
-            if os.path.isdir(source):
-                copy(source, dest)
-            else:
-                shutil.copy(source, dest)
+            copy_source_exist(source, dest)
 
     shutil.copy(CONFIG_FILE, profile_dir)
 
@@ -198,49 +207,39 @@ def export(args):
        If there is no specified directory, the directory is set to the current working directory.
 
     Args:
-        profile_name: name of the profile to be exported
-        profile_list: the list of all created profiles
-        profile_count: number of profiles created
-        directory: output directory for the export
-        force: force the overwrite of existing export file
-        name: the name of the resulting archive
+        args.name: name of the profile to be exported
+        args.directory: output directory for the export
+        args.force: force the overwrite of existing export file
+        args.archive_name: the name of the resulting archive
     """
 
     profile_name = args.name
+    archive_dir = args.directory or os.getcwd()
+    archive_name = args.export_name or profile_name
+
     profile_list, profile_count = get_profiles()
-    archive_dir = args.directory
-    archive_name = args.name
     # assert
     assert profile_count != 0, "No profile saved yet."
     assert profile_name in profile_list, "Profile not found."
 
     # run
     profile_dir = os.path.join(PROFILES_DIR, profile_name)
-
-    if archive_name:
-        profile_name = archive_name
-
-    if archive_dir:
-        export_path = os.path.join(archive_dir, profile_name)
-    else:
-        export_path = os.path.join(os.getcwd(), profile_name)
+    export_path = os.path.join(archive_dir, archive_name)
 
     # Only continue if export_path, export_path.ksnv and export_path.zip don't exist
     # Appends date and time to create a unique file name
     if not args.force:
+        orig_export_path = export_path
         while True:
             paths = [f"{export_path}", f"{export_path}.knsv", f"{export_path}.zip"]
-            if any(os.path.exists(path) for path in paths):
-                time = f"{datetime.now():%d-%m-%Y:%H-%M-%S}"
-                export_path = f"{export_path}_{time}"
-            else:
+            if not any(os.path.exists(path) for path in paths):
                 break
+            export_path = f"{orig_export_path}_{datetime.now().isoformat()}"
 
     # compressing the files as zip
     log.info("Exporting profile. It might take a minute or two...")
 
-    profile_config_file = os.path.join(profile_dir, "conf.yaml")
-    konsave_config = parse(profile_config_file)
+    konsave_config = parse(os.path.join(profile_dir, "conf.yaml"))
 
     export_path_save = mkdir(os.path.join(export_path, "save"))
     for name in konsave_config["save"]:
@@ -250,18 +249,13 @@ def export(args):
 
     konsave_config_export = konsave_config["export"]
     export_path_export = mkdir(os.path.join(export_path, "export"))
-    for name in konsave_config_export:
-        location = konsave_config_export[name]["location"]
+    for name, section in konsave_config_export.items():
         path = mkdir(os.path.join(export_path_export, name))
-        for entry in konsave_config_export[name]["entries"] or ():
-            source = os.path.join(location, entry)
+        for entry in section["entries"] or ():
+            source = os.path.join(section["location"], entry)
             dest = os.path.join(path, entry)
             log.info(f'Exporting "{entry}"...')
-            if os.path.exists(source):
-                if os.path.isdir(source):
-                    copy(source, dest)
-                else:
-                    shutil.copy(source, dest)
+            copy_source_exist(source, dest)
 
     shutil.copy(CONFIG_FILE, export_path)
 
@@ -283,46 +277,37 @@ def import_profile(args):
     path = args.path
     # assert
     assert (
-        is_zipfile(path) and path[-5:] == EXPORT_EXTENSION
+        is_zipfile(path) and path[-len(EXPORT_EXTENSION) :] == EXPORT_EXTENSION
     ), "Not a valid konsave file"
-    item = os.path.basename(path)[:-5]
-    assert not os.path.exists(
-        os.path.join(PROFILES_DIR, item)
-    ), "A profile with this name already exists"
+    item = args.import_name or os.path.basename(path).replace(EXPORT_EXTENSION, "")
+    assert not os.path.exists(os.path.join(PROFILES_DIR, item)), (
+        "A profile with this name already exists. Use --import-name to "
+        "import under different name"
+    )
 
     # run
     log.info("Importing profile. It might take a minute or two...")
 
-    item = os.path.basename(path).replace(EXPORT_EXTENSION, "")
+    with TemporaryDirectory(prefix="konsave") as temp_path:
+        with ZipFile(path, "r") as zip_file:
+            zip_file.extractall(temp_path)
 
-    temp_path = os.path.join(KONSAVE_DIR, "temp", item)
+        config_file_location = os.path.join(temp_path, "conf.yaml")
+        konsave_config = parse(config_file_location)
 
-    with ZipFile(path, "r") as zip_file:
-        zip_file.extractall(temp_path)
+        # Copies only under "profiles"
+        profile_dir = os.path.join(PROFILES_DIR, item)
+        copy(os.path.join(temp_path, "save"), profile_dir)
+        shutil.copy(os.path.join(temp_path, "conf.yaml"), profile_dir)
 
-    config_file_location = os.path.join(temp_path, "conf.yaml")
-    konsave_config = parse(config_file_location)
-
-    # Copies only under "profiles"
-    profile_dir = os.path.join(PROFILES_DIR, item)
-    copy(os.path.join(temp_path, "save"), profile_dir)
-    shutil.copy(os.path.join(temp_path, "conf.yaml"), profile_dir)
-
-    for section in konsave_config["export"]:
-        location = konsave_config["export"][section]["location"]
-        path = os.path.join(temp_path, "export", section)
-        mkdir(path)
-        for entry in konsave_config["export"][section]["entries"] or ():
-            source = os.path.join(path, entry)
-            dest = os.path.join(location, entry)  # Installs into the location ??
-            log.info(f'Importing "{entry}"...')
-            if os.path.exists(source):
-                if os.path.isdir(source):
-                    copy(source, dest)
-                else:
-                    shutil.copy(source, dest)
-
-    shutil.rmtree(temp_path)
+        for section_name, section in konsave_config["export"].items():
+            path = os.path.join(temp_path, "export", section_name)
+            mkdir(path)
+            for entry in section["entries"] or ():
+                source = os.path.join(path, entry)
+                dest = os.path.join(section["location"], entry)
+                log.info(f'Importing "{entry}"...')
+                copy_source_exist(source, dest)
 
     log.info("Profile successfully imported!")
 
@@ -363,6 +348,7 @@ def install_config(force: bool = False):
     with the distributed one.
     """
     if os.path.exists(CONFIG_FILE) and force:
+        log.warning("Deleting existing config...")
         os.unlink(CONFIG_FILE)
 
     if os.path.exists(CONFIG_FILE):

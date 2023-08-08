@@ -70,7 +70,10 @@ def parse_args() -> argparse.ArgumentParser:
     import_parser = sub.add_parser(
         "import", help="Import a profile from a konsave archive"
     )
-    import_parser.add_argument("konsave-file")
+    import_parser.add_argument("path")
+    import_parser.add_argument(
+        "-n", "--import-name", help="Specify the name of the profile when importing it"
+    )
 
     sub.add_parser("wipe", help="Wipe all profiles - this cannot be undone!")
     sub.add_parser("version", help="Show Konsave version")
