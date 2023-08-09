@@ -4,6 +4,7 @@ This module contains all the functions for konsave.
 
 import os
 import logging
+from pathlib import Path
 import shutil
 from datetime import datetime
 from tempfile import TemporaryDirectory
@@ -217,10 +218,15 @@ def export(args):
         args.force: force the overwrite of existing export file
         args.archive_name: the name of the resulting archive
     """
-
     profile_name = args.name
-    archive_dir = args.directory or os.getcwd()
-    archive_name = args.export_name or profile_name
+    if args.output:
+        out = Path(args.output)
+        # remove anything after a dot (ie rm all suffixes)
+        if out.suffixes:
+            out = out.parent / out.name.split(out.suffixes[0])[0]
+        export_path = str(out)
+    else:
+        export_path = os.path.join(os.getcwd(), profile_name)
 
     profile_list, profile_count = get_profiles()
     # assert
@@ -229,7 +235,6 @@ def export(args):
 
     # run
     profile_dir = os.path.join(PROFILES_DIR, profile_name)
-    export_path = os.path.join(archive_dir, archive_name)
 
     # Only continue if export_path, export_path.ksnv and export_path.zip don't exist
     # Appends date and time to create a unique file name
@@ -246,29 +251,38 @@ def export(args):
 
     konsave_config = parse(os.path.join(profile_dir, "conf.yaml"))
 
-    export_path_save = mkdir(os.path.join(export_path, "save"))
-    for name in konsave_config["save"]:
-        location = os.path.join(profile_dir, name)
-        log.info(f'Exporting "{name}"...')
-        copy(location, os.path.join(export_path_save, name))
+    with TemporaryDirectory(prefix="konsave") as temp_path:
+        log.debug(f"Building archive in {temp_path}")
+        export_path_save = mkdir(os.path.join(temp_path, "save"))
+        for name in konsave_config["save"]:
+            location = os.path.join(profile_dir, name)
+            log.info(f'Exporting "{name}"...')
+            copy(location, os.path.join(export_path_save, name))
 
-    konsave_config_export = konsave_config["export"]
-    export_path_export = mkdir(os.path.join(export_path, "export"))
-    for name, section in konsave_config_export.items():
-        path = mkdir(os.path.join(export_path_export, name))
-        for entry in section["entries"] or ():
-            source = os.path.join(section["location"], entry)
-            dest = os.path.join(path, entry)
-            log.info(f'Exporting "{entry}"...')
-            copy_source_exist(source, dest)
+        konsave_config_export = konsave_config["export"]
+        export_path_export = mkdir(os.path.join(temp_path, "export"))
+        for name, section in konsave_config_export.items():
+            path = mkdir(os.path.join(export_path_export, name))
+            for entry in section["entries"] or ():
+                source = os.path.join(section["location"], entry)
+                dest = os.path.join(path, entry)
+                log.info(f'Exporting "{entry}"...')
+                copy_source_exist(source, dest)
 
-    shutil.copy(CONFIG_FILE, export_path)
+        shutil.copy(CONFIG_FILE, temp_path)
 
-    log.info("Creating archive")
-    shutil.make_archive(export_path, "zip", export_path)
+        log.info(f"Creating temp archive in {temp_path}.zip")
+        # The following adds the .zip extension
+        # Make sure the archive is in the temp location for now
+        shutil.make_archive(temp_path, "zip", temp_path)
 
-    shutil.rmtree(export_path)
-    shutil.move(export_path + ".zip", export_path + EXPORT_EXTENSION)
+        if export_path == "/dev/stdout":
+            final_path = export_path
+        else:
+            final_path = export_path + EXPORT_EXTENSION
+
+        # Move the archive and remove the .zip extension
+        shutil.move(temp_path + ".zip", final_path)
 
     log.info(f"Successfully exported to {export_path}{EXPORT_EXTENSION}")
 
