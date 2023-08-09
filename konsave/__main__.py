@@ -60,18 +60,11 @@ def parse_args() -> argparse.ArgumentParser:
     export_parser.add_argument("name")
     export_parser.add_argument("-f", "--force", action="store_true")
     export_parser.add_argument(
-        "-d",
-        "--directory",
+        "-o",
+        "--output",
         required=False,
-        help="Specify the export directory when exporting a profile",
-        metavar="<directory>",
-    )
-    export_parser.add_argument(
-        "-n",
-        "--export-name",
-        required=False,
-        help="Specify the export name when exporting a profile",
-        metavar="<archive-name>",
+        help="Specify the full export path. Any extension will be ignored",
+        metavar="<path>",
     )
 
     import_parser = sub.add_parser(
