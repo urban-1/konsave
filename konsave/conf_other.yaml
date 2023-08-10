@@ -1,25 +1,32 @@
 ---
 # This is the configuration file for konsave.
 # Please make sure it follows the correct format for proper working of konsave.
+#
 # The format should be:
+#
 # ---
 # save:
+#     # This inludes configs. All files listed here are being re-installed
+#     # when one calls konsave apply <profile> (overwriting existing user
+#     # configs)
 #     name:
 #         location: "path/to/parent/directory"
 #         entries: 
-#         # these are files to be backed up. They should be present in the specified location.
+#         # these are files which will be backed up. 
+#         # They should be present in the specified location.
 #             - file1
 #             - file2
 # export:
-#     # This includes files which will be exported with your profile.
-#     # They will not be saved but only be exported and imported.
-#     # These may include files like complete icon packs and themes..
+#     # This includes files which will be exported with your profile archive.
+#     # These will not be copied over on "apply" but only on import. Ideally
+#     # this section should include files like icon packs, themes, fonts
 #     name:
 #         location: "path/to/parent/directory"
 #         entries: 
 #             - file1
 #             - file2
 # ...
+#
 # You can use these variables and functions in the locations of different entries:
 # $HOME: the home directory
 # $PROFILES_DIR: directory where all profiles are saved
