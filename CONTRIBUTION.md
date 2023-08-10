@@ -20,7 +20,7 @@ Once there, you can run with normally with `konsave`
 ## Pull Request Process
 
 1. Make your changes
-2. Ensure `make fmt` passes. This will be triggered in the PR also and block from merging
+2. Ensure `make checks` passes. This will be triggered in the PR also and block from merging
 3. Update the README.md and any other docs (if needed)
 4. Make PR
 

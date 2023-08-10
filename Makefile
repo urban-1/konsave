@@ -1,4 +1,4 @@
-.PHONY: help all setup dev-setup fmt clean distclean maintclean pyfmt black usort tests
+.PHONY: help all setup dev-setup check clean distclean maintclean pyfmt black usort tests
 
 all: setup
 
@@ -7,7 +7,7 @@ help:
 		@echo ""
 		@echo " - setup:        User-level setup"
 		@echo " - dev-setup:    Development setup"
-		@echo " - fmt:          Format the code with pyfmt"
+		@echo " - checks:       Format the code with pyfmt and lint"
 		@echo " - clean:        Remove all pyc files"
 		@echo " - distclean:    Remove any eggs/builds"
 		@echo " - maintclean:   Remove virtual env and dist files"
@@ -26,17 +26,11 @@ dev-setup: setup
 		@@(. .venv/bin/activate && pip install -r requirements_dev.txt)
 
 
-fmt: black pylint
+checks: black pylint
 
 black:
 		@echo " * Running black"
 		@black --safe konsave
-
-
-# TODO: Consider adding this
-# usort:
-# 		@echo " * Running usort"
-# 		@usort format konsave
 
 pylint:
 		@echo " * Running pylint"
@@ -54,7 +48,7 @@ maintclean: distclean
 
 # TODO: Consider adding proper type-checking
 # typecheck:
-#		 mypy -p yacgtc --strict --no-strict-optional --ignore-missing-imports --install-types
+#		 mypy -p konsave --strict --no-strict-optional --ignore-missing-imports --install-types
 #		 mypy -p tests --no-strict-optional --ignore-missing-imports --install-types
 
 tests:
