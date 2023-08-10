@@ -157,6 +157,22 @@ vivaldi                                  False         True
 vlc                                      True          True
 ```
 
+### List files in archive
+
+This is a basic list to allow people to do basic troubleshooting on file sizes. Anything more than that should be done by extracting and exporing the archive in /tmp (or some other temp location). Example output:
+
+```
+$ konsave ls-archive ~/tmp/test.knsv
+File/Folder                                                                                         Size       Comp. Size
+--------------------------------------------------------------------------------------------------  ---------  ------------
+export/                                                                                             188.58 MB  185.15 MB
+save/                                                                                               231.51 KB  61.62 KB
+conf.yaml                                                                                           3.64 KB    1.23 KB
+export/common/                                                                                      188.48 MB  185.07 MB
+export/home_folder/                                                                                 0.00 B     0.00 B
+...
+```
+
 ### Show current version
 `konsave version`
 
