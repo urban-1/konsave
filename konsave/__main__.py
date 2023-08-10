@@ -138,6 +138,8 @@ def main():
     except (ValueError, AssertionError) as ex:
         print(str(ex))
 
+    return -1
+
 
 if __name__ == "__main__":
     main()
