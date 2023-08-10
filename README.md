@@ -13,16 +13,8 @@
 
 ## Installation
 
-Git atm - no pypi yet
-
-Quick start:
-
 ```
-git clone ...
-cd konsave
-make setup
-. .venv/bin/activate
-python setup.py develop
+pip install konsave-urban
 ```
 
 ## Usage
