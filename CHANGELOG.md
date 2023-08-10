@@ -1,3 +1,5 @@
+**NOTE: THIS FILE IS NO LONGER MAINTAINED**
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
