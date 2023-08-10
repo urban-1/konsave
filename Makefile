@@ -56,9 +56,9 @@ tests:
 
 
 release-test: distclean
-	python setup.py sdist
+	python setup.py sdist bdist_wheel
 	twine upload -r testpypi dist/*
 
 release: distclean
-	python setup.py sdist
+	python setup.py sdist bdist_wheel
 	twine upload dist/*
