@@ -1,4 +1,8 @@
-WARNING: Code here is no longer compatible with parent project and there is no PyPI distribution
+## WARNINGS 
+
+1. This is a fork of https://github.com/Prayag2/konsave that was heavily refactored
+1. Code here is no longer compatible with parent project which means that any improvements there will need to be manually ported to this version
+
 
 ---
 
@@ -41,7 +45,7 @@ options:
   -h, --help            show this help message and exit
   -d, --debug           Enable debug logging
 
-Please report bugs at https://www.github.com/prayag2/konsave
+Please report bugs at https://www.github.com/urban-1/konsave
 ```
 
 ### Save current configuration as a profile
@@ -97,25 +101,37 @@ Konsave: removed profile successfully
 ```
 
 ### Apply a profile
-`konsave apply test`
+
+```
+konsave apply test
+```
+
+If you are a KDE user, you can supply `-r/--reload-kde` which will invoke a `killall plasmashell; kstart plasmashell` to restart plasma and pick up the changes.
 
 You may need to log out and log in to see all the changes.  
 
 ### Export a profile as a ".knsv" file to share it with your friends!
-`konsave export <profile name>` 
-#### Export a profile, setting the output dir and archive name
+
 ```
-konsave export <profile name> -d <archive directory> -n <archive name>
+konsave export <profile name>
+``` 
 
-# OR
+If the target file already exists, the date will be automatically appended to the archive name. If you want to overwrite the existing file use `-f/--force`
 
-konsave export <profile name> --archive-directory <archive directory> --export-name <export name>
+You can also specify a different output file using the `-o/--output` flag, for example:
+
 ```
+konsave export trigkey -o /tmp/test.knsv
 
-If the target file already exists, the date will be automatically appended. If you want to overwrite the existing file use `--force`
+# OR dump archive on screen
+konsave export trigkey -o /dev/stdout
+```
 
 ### Import a ".knsv" file
-`konsave import <path to the file>` 
+```
+konsave import <path to the file>
+```
+
 If you want to import under a different name (other than the knsv filename) use `--import-name`
 
 ### Show current version
@@ -159,17 +175,17 @@ export:
 ...
 ```
 You can use these placeholders in the "location" of each item:
-- $HOME: the home directory
-- $CONFIG_DIR: refers to "$HOME/.config/"
-- $SHARE_DIR: refers to "$HOME/.local/share"
-- $BIN_DIR: refers to "$HOME/.local/bin"
-- ${ENDS_WITH="text"}: for folders with different names on different computers whose names end with the same thing.
+- `$HOME`: the home directory
+- `$CONFIG_DIR`: refers to "$HOME/.config/"
+- `$SHARE_DIR`: refers to "$HOME/.local/share"
+- `$BIN_DIR`: refers to "$HOME/.local/bin"
+- `${ENDS_WITH="text"}`: for folders with different names on different computers whose names end with the same thing.
 
 
 ---
 
 ## Contributing
-Please read [CONTRIBUTION.md](https://github.com/Prayag2/konsave/blob/master/CONTRIBUTION.md) for info about contributing. 
+Please read [CONTRIBUTION.md](https://github.com/urban-1/konsave/blob/master/CONTRIBUTION.md) for info about contributing. 
 
 ## License
 This project uses GNU General Public License 3.0

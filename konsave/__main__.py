@@ -28,7 +28,7 @@ def parse_args() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         prog="Konsave",
-        epilog="Please report bugs at https://www.github.com/prayag2/konsave",
+        epilog="Please report bugs at https://www.github.com/urban-1/konsave",
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", help="Enable debug logging"
