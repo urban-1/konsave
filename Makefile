@@ -59,3 +59,12 @@ maintclean: distclean
 
 tests:
 		python3 ./test.py
+
+
+release-test: distclean
+	python setup.py sdist
+	twine upload -r testpypi dist/*
+
+release: distclean
+	python setup.py sdist
+	twine upload dist/*
