@@ -166,7 +166,7 @@ def apply_profile(args):
     profile_list, profile_count = get_profiles()
     # assert
     assert profile_count != 0, "No profile saved yet."
-    assert args.name in profile_list, "Profile not found :("
+    assert args.name in profile_list, f"Profile not found: {args.name}"
 
     # run
     profile_dir = os.path.join(PROFILES_DIR, args.name)
@@ -200,7 +200,7 @@ def remove_profile(args):
     profile_list, profile_count = get_profiles()
     # assert
     assert profile_count != 0, "No profile saved yet."
-    assert args.name in profile_list, "Profile not found."
+    assert args.name in profile_list, f"Profile not found: {args.name}"
 
     # run
     log.info("removing profile...")
@@ -231,7 +231,7 @@ def export(args):
     profile_list, profile_count = get_profiles()
     # assert
     assert profile_count != 0, "No profile saved yet."
-    assert profile_name in profile_list, "Profile not found."
+    assert profile_name in profile_list, f"Profile not found: {profile_name}"
 
     # run
     profile_dir = os.path.join(PROFILES_DIR, profile_name)

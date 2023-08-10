@@ -124,8 +124,11 @@ def main():
         "reset-config": reset_config,
         "config-check": config_check,
     }
-    return funcs[args.cmd](args)
-
+    try:
+        return funcs[args.cmd](args)
+    # FIXME(urban-1): Create a "user error" exception
+    except (ValueError, AssertionError) as ex:
+        print(str(ex))
 
 if __name__ == "__main__":
     main()
