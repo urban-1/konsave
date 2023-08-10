@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 from tempfile import TemporaryDirectory
-from zipfile import is_zipfile, ZipFile
+from zipfile import ZipInfo, is_zipfile, ZipFile
 from pkg_resources import resource_filename
 
 import tabulate
@@ -348,6 +348,72 @@ def config_check(args):  # pylint: disable=unused-argument
         for entry in sorted(entries | dir_entries):
             table.append([entry, entry in entries, entry in dir_entries])
         print(tabulate.tabulate(table, headers=["Entry", "Backed Up?", "In ~/.config"]))
+
+
+def convert(value, cur_unit="B", units=None, increment=1024):
+    """
+    Convert the given value/cur_unit to the largest unit available
+    or to a value less than ``increment``
+    """
+    units = units or ["B", "KB", "MB", "GB", "TB"]
+    unit_idx = units.index(cur_unit)
+    while value >= increment and len(units) > unit_idx + 1:
+        unit_idx += 1
+        value /= 1024
+
+    return value, units[unit_idx]
+
+
+def ls_archive(args):
+    """
+    Open the given path and list all files/folders and their sizes
+    """
+    entries = []
+    dirs = {}
+    with ZipFile(args.path, "r") as arc:
+        # Entries appear as we would like to display them. This means
+        # that dirs come first but this way we cannot sum their child
+        # file sizes. So... reverse
+        for entry in reversed(arc.infolist()):
+            # print(entry.filename, ' : ', entry.file_size, ' : ')
+            # store filename and size in dictionary
+            if entry.is_dir():
+                # We should already have all the info!
+                # Try to get it but if it has no files, then it will
+                # not exist in dirs
+                dir_entry = dirs.get(entry.filename, entry)
+                entries.append(dir_entry)
+                continue
+
+            # Accumulate size of directories
+            for parent in Path(entry.filename).parents:
+                if str(parent) in {"/", "."}:
+                    break
+                str_parent = f"{parent}/"
+                if str_parent not in dirs:
+                    dirs[str_parent] = ZipInfo(str_parent)
+                # Sum shit up!
+                dirs[str_parent].file_size += entry.file_size
+                dirs[str_parent].compress_size += entry.compress_size
+
+            # Handle files
+            entries.append(entry)
+
+    def human_size(value: int) -> str:
+        value, unit = convert(value)
+        return f"{value:.2f} {unit}"
+
+    # Now print!
+    # tabulate.PRESERVE_WHITESPACE = True
+    print(
+        tabulate.tabulate(
+            [
+                [e.filename, human_size(e.file_size), human_size(e.compress_size)]
+                for e in reversed(entries)
+            ],
+            headers=["File/Folder", "Size", "Comp. Size"],
+        )
+    )
 
 
 def wipe():
