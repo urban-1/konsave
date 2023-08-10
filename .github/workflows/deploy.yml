@@ -9,7 +9,9 @@ jobs:
   deploy:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    # The following never works because the ref is on the tag 
+    # and not the branch
+    # if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
