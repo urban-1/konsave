@@ -6,6 +6,7 @@ from konsave.funcs import (
     config_check,
     install_config,
     list_profiles,
+    ls_archive,
     reset_config,
     save_profile,
     remove_profile,
@@ -93,6 +94,12 @@ def parse_args() -> argparse.ArgumentParser:
         ),
     )
 
+    ls_parser = sub.add_parser(
+        "ls-archive",
+        help="List all the files in an archive and their sizes",
+    )
+    ls_parser.add_argument("path")
+
     return parser.parse_args()
 
 
@@ -123,6 +130,7 @@ def main():
         "wipe": wipe,
         "reset-config": reset_config,
         "config-check": config_check,
+        "ls-archive": ls_archive,
     }
     try:
         return funcs[args.cmd](args)

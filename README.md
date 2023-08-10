@@ -126,6 +126,53 @@ konsave import <path to the file>
 
 If you want to import under a different name (other than the knsv filename) use `--import-name`
 
+### Checking what is included
+
+The following will compare the current Konsave config (conf.yaml) entries against the user's "~/.config" folder and will list all the entries along with info on if they are:
+
+- Backed up: Appear in the config. Entries that have False here exist in the filesystem but not in the konsave config. As such, these are configs that are not backed up
+- In ~/.config: Exist in the file system. Entries that have False here are mentioned in the config but do not exist in the local system (not installed or imported)
+
+Example:
+
+```
+$ konsave config-check
+
+# Config section: configs
+
+Entry                                    Backed Up?    In ~/.config
+---------------------------------------  ------------  --------------
+Code                                     False         True
+KDE                                      False         True
+Kvantum                                  True          False
+QtProject.conf                           False         True
+...
+spectaclerc                              True          True
+systemmonitorrc                          False         True
+systemsettingsrc                         False         True
+trashrc                                  False         True
+user-dirs.dirs                           False         True
+user-dirs.locale                         False         True
+vivaldi                                  False         True
+vlc                                      True          True
+```
+
+### List files in archive
+
+This is a basic list to allow people to do basic troubleshooting on file sizes. Anything more than that should be done by extracting and exporing the archive in /tmp (or some other temp location). Example output:
+
+```
+$ konsave ls-archive ~/tmp/test.knsv
+File/Folder                                                                                         Size       Comp. Size
+--------------------------------------------------------------------------------------------------  ---------  ------------
+export/                                                                                             188.58 MB  185.15 MB
+save/                                                                                               231.51 KB  61.62 KB
+conf.yaml                                                                                           3.64 KB    1.23 KB
+export/common/                                                                                      188.48 MB  185.07 MB
+export/home_folder/                                                                                 0.00 B     0.00 B
+...
+```
+
 ### Show current version
 `konsave version`
 
