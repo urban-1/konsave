@@ -34,15 +34,18 @@ _REQUIREMENTS: List[str] = _read_reqs(Path("requirements.txt"))
 _REQUIREMENTS_DEV: List[str] = _read_reqs(Path("requirements_dev.txt"))
 
 setup(
-    name="Konsave",
+    name="konsave-urban",
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
-    author="Prayag Jain",
-    author_email="prayagjain2@gmail.com",
-    description="A program that lets you save your Plasma configuration in an instant!",
+    author="Andreas Bontozoglou",
+    author_email="a.bontozoglou@gmail.com",
+    description=(
+        "A program that lets you save your Plasma configuration in an instant!\n"
+        "NOTE: FORKED VERSION"
+    ),
     long_description=_read_desc(),
     long_description_content_type="text/markdown",
-    url="https://www.github.com/prayag2/konsave/",
+    url="https://www.github.com/urban/konsave/",
     packages=find_packages(),
     package_data={"config": ["conf.yaml"]},
     include_package_data=True,
